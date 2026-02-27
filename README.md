@@ -1,31 +1,62 @@
 # KiloApp
 
-KiloApp is a desktop app (Tauri + React) for running and monitoring Kilo CLI sessions across local workspaces.
+KiloApp is a desktop client for [KiloCode](https://kilo.ai) — an AI coding agent. Built with Electron and React.
 
-## Current MVP
+## Features
 
-- Starts/stops a managed `kilo serve` process
-- Health checks against the running Kilo server
-- Workspace list (persisted locally)
-- Session list/create per workspace
-- Chat-style prompt composer (`POST /session/:id/message`)
-- Message feed with lightweight tool/reasoning rendering
-- Abort button for in-flight runs
+- Manages a local `kilo serve` process (auto-start, restart, health checks)
+- Real-time updates via SSE (Server-Sent Events)
+- Workspace management with persistent local storage
+- Session list, create, rename, fork, compact, and delete
+- Chat-style prompt composer with abort support
+- Message feed with tool activity, reasoning, and diff rendering
+- Cloud session import
+- Agent management
+- Model selection across connected providers
+- macOS-native window with vibrancy, hidden titlebar, and rounded corners
 
 ## Requirements
 
-- macOS/Linux/Windows with Node.js 18+
-- Rust toolchain
-- Kilo CLI installed and available in `PATH` as `kilo`
+- macOS (primary), Linux, or Windows
+- Node.js 18+
+- [Kilo CLI](https://kilo.ai) installed and available in `PATH` as `kilo`
 
-## Run
+## Development
 
 ```bash
 npm install
-npm run tauri dev
+npm run dev
+```
+
+This starts Vite on `localhost:5173` and launches the Electron window pointing at it.
+
+## Build
+
+```bash
+npm run build      # compile Electron + Vite
+npm run dist       # package with electron-builder
+```
+
+Built artifacts go to `release/`.
+
+## Architecture
+
+```
+electron/
+  main.cts          # Electron main process — BrowserWindow, IPC handlers
+  preload.cts       # contextBridge exposing window.electron API
+src/
+  main.tsx          # React entry point
+  App.tsx           # Root component — boot, server management, routing
+  api.ts            # HTTP client for Kilo server REST API
+  hooks.ts          # SSE connection hook
+  types.ts          # Shared TypeScript types
+  ...               # UI components (Sidebar, ThreadView, Composer, etc.)
+build/icons/        # App icons for electron-builder
 ```
 
 ## Notes
 
-- Server API calls pass workspace context via `x-opencode-directory`.
-- The app can talk to any Kilo server URL, but the `Start`/`Stop` buttons manage a local `kilo serve` child process.
+- Server API calls pass workspace context via `x-opencode-directory` header.
+- The app manages a local `kilo serve` child process but can talk to any running Kilo server on port 4100.
+- Window dragging uses CSS `-webkit-app-region: drag` (native Electron support).
