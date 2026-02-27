@@ -1,5 +1,7 @@
 # KiloApp
 
+> **Work in Progress** — This project is under active development. Features may be incomplete or change without notice.
+
 KiloApp is a desktop client for [KiloCode](https://kilo.ai) — an AI coding agent. Built with Electron and React.
 
 ## Features
