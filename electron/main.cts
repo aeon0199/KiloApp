@@ -119,7 +119,7 @@ function registerIPC() {
 
 // ── Window ───────────────────────────────────────────────────────
 function createWindow() {
-  const preload = path.join(__dirname, "preload.js");
+  const preload = path.join(__dirname, "preload.cjs");
 
   const win = new BrowserWindow({
     width: 1440,
