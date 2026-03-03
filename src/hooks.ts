@@ -38,11 +38,13 @@ type SSEStatus = "connecting" | "connected" | "disconnected";
 export type SSEContextValue = {
   subscribe: (eventType: string, callback: SSECallback) => () => void;
   status: SSEStatus;
+  reconnect: () => void;
 };
 
 export const SSEContext = createContext<SSEContextValue>({
   subscribe: () => () => {},
   status: "disconnected",
+  reconnect: () => {},
 });
 
 export function useSSE(): SSEContextValue {
@@ -51,6 +53,7 @@ export function useSSE(): SSEContextValue {
 
 export function useSSEConnection(serverUrl: string): SSEContextValue {
   const [status, setStatus] = useState<SSEStatus>("connecting");
+  const [refreshKey, setRefreshKey] = useState(0);
   const callbacksRef = useRef<Map<string, Set<SSECallback>>>(new Map());
 
   useEffect(() => {
@@ -96,7 +99,7 @@ export function useSSEConnection(serverUrl: string): SSEContextValue {
       cancelled = true;
       es?.close();
     };
-  }, [serverUrl]);
+  }, [serverUrl, refreshKey]);
 
   const subscribe = useCallback((eventType: string, callback: SSECallback) => {
     if (!callbacksRef.current.has(eventType)) {
@@ -108,5 +111,9 @@ export function useSSEConnection(serverUrl: string): SSEContextValue {
     };
   }, []);
 
-  return { subscribe, status };
+  const reconnect = useCallback(() => {
+    setRefreshKey((current) => current + 1);
+  }, []);
+
+  return { subscribe, status, reconnect };
 }

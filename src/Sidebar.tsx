@@ -14,6 +14,7 @@ import {
   Minimize2,
   Trash2,
 } from "lucide-react";
+import kiloCodeMark from "./assets/kilocode-k1l0.svg";
 import type { SessionInfo } from "./types";
 import { pathName, relativeTime } from "./utils";
 import { ContextMenu, type ContextMenuItem } from "./ContextMenu";
@@ -42,7 +43,6 @@ type SidebarProps = {
   onForkSession: (id: string) => void;
   onDeleteSession: (id: string) => void;
   onCompactSession: (id: string) => void;
-  startDrag: (e: React.MouseEvent) => void;
 };
 
 export function Sidebar({
@@ -67,7 +67,6 @@ export function Sidebar({
   onForkSession,
   onDeleteSession,
   onCompactSession,
-  startDrag,
 }: SidebarProps) {
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number; sessionId: string } | null>(null);
   const [renamingId, setRenamingId] = useState<string | null>(null);
@@ -108,11 +107,15 @@ export function Sidebar({
 
   return (
     <aside className="sidebar">
-      <div className="sidebar-drag-region" onMouseDown={startDrag} />
+      <div className="sidebar-drag-region" />
+
+      <div className="sidebar-brand">
+        <img src={kiloCodeMark} alt="KiloCode" className="sidebar-brand-logo" />
+      </div>
 
       <button className="new-thread" onClick={onCreateThread}>
         <Plus size={14} />
-        New thread
+        New session
       </button>
 
       {/* Navigation tabs */}
@@ -122,7 +125,7 @@ export function Sidebar({
           onClick={() => onTabChange("threads")}
         >
           <MessageSquare size={13} />
-          Threads
+          Sessions
         </button>
         <button
           className={`sidebar-tab ${activeTab === "cloud" ? "active" : ""}`}
@@ -144,7 +147,7 @@ export function Sidebar({
       {activeTab === "threads" && (
         <>
           <div className="sidebar-section-header">
-            <h2>Threads</h2>
+            <h2>Sessions</h2>
             <div className="sidebar-section-actions">
               <button className="icon-button" onClick={onAddWorkspace} aria-label="Add project">
                 <FolderPlus size={14} />
@@ -169,7 +172,7 @@ export function Sidebar({
             {workspaces.map((ws) => {
               const isCollapsed = collapsedWorkspaces.has(ws);
               const isActive = ws === selectedWorkspace;
-              const threads = isActive ? sessions : (sessionsByWorkspace.get(ws) ?? []);
+              const threads = sessionsByWorkspace.get(ws) ?? [];
 
               return (
                 <div key={ws} className="workspace-group">
@@ -197,7 +200,7 @@ export function Sidebar({
                     <div className="workspace-threads">
                       {loadingSessions && <p className="muted">Loading...</p>}
                       {!loadingSessions && threads.length === 0 && (
-                        <p className="muted">No threads yet</p>
+                        <p className="muted">No sessions yet</p>
                       )}
                       {threads.map((session) => (
                         <button
@@ -221,7 +224,7 @@ export function Sidebar({
                             />
                           ) : (
                             <>
-                              <span>{session.title || "Untitled thread"}</span>
+                              <span>{session.title || "Untitled session"}</span>
                               <small>{relativeTime(session.time.updated)}</small>
                             </>
                           )}

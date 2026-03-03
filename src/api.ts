@@ -13,7 +13,15 @@ import type {
   QuestionRequest,
   SessionInfo,
   SessionStatusInfo,
+  RuntimeSelection,
 } from "./types";
+
+// Helper to log to both console and terminal
+function debugLog(...args: unknown[]) {
+  const message = args.map(a => typeof a === 'object' ? JSON.stringify(a) : String(a)).join(' ');
+  console.log('[DEBUG]', message);
+  window.electron?.debug?.log(message);
+}
 
 type RequestInput = {
   path: string;
@@ -21,6 +29,8 @@ type RequestInput = {
   directory?: string;
   body?: unknown;
 };
+
+type RuntimeFallbackCallback = (message: string) => void;
 
 export class KiloApi {
   private baseUrl: string;
@@ -43,6 +53,7 @@ export class KiloApi {
       headers,
       body: input.body !== undefined ? JSON.stringify(input.body) : undefined,
     });
+    debugLog('API request:', input.method ?? 'GET', input.path, 'body:', input.body);
 
     if (!response.ok) {
       const text = await response.text().catch(() => "");
@@ -61,6 +72,48 @@ export class KiloApi {
     }
   }
 
+  private runtimeFields(runtime?: RuntimeSelection): Record<string, unknown> {
+    if (!runtime) return {};
+    const fields: Record<string, unknown> = {};
+    if (runtime.agent) {
+      debugLog('runtimeFields adding agent:', runtime.agent);
+      fields.agent = runtime.agent;
+    }
+    if (runtime.modelID) {
+      fields.model = {
+        providerID: runtime.providerID || "kilo",
+        modelID: runtime.modelID,
+      };
+    }
+    return fields;
+  }
+
+  private shouldRetryRuntimeFallback(reason: unknown): boolean {
+    const message = reason instanceof Error ? reason.message : String(reason);
+    const lower = message.toLowerCase();
+    const status = Number((/request failed \((\d+)\)/i.exec(lower) || [])[1] || 0);
+    const retryableStatus = status === 400 || status === 404 || status === 422;
+    if (!retryableStatus) return false;
+    const runtimeHints = ["agent", "model", "provider", "unknown", "unexpected", "invalid", "property", "field"];
+    return runtimeHints.some((hint) => lower.includes(hint));
+  }
+
+  private async requestWithRuntimeFallback<T>(
+    runtime: RuntimeSelection | undefined,
+    onRuntimeFallback: RuntimeFallbackCallback | undefined,
+    requestWithRuntime: () => Promise<T>,
+    requestWithoutRuntime: () => Promise<T>,
+  ): Promise<T> {
+    if (!runtime) return requestWithRuntime();
+    try {
+      return await requestWithRuntime();
+    } catch (reason) {
+      if (!this.shouldRetryRuntimeFallback(reason)) throw reason;
+      onRuntimeFallback?.("Kilo server rejected runtime override. Retrying with server defaults.");
+      return requestWithoutRuntime();
+    }
+  }
+
   // ── Health ──────────────────────────────────────────────────────
   async health(): Promise<HealthResponse> {
     return this.request<HealthResponse>({ path: "/global/health" });
@@ -72,13 +125,28 @@ export class KiloApi {
     return this.request<SessionInfo[]>({ path: `/session?${query.toString()}` });
   }
 
-  async createSession(directory: string, title?: string) {
-    return this.request<SessionInfo>({
-      path: "/session",
-      method: "POST",
-      directory,
-      body: title ? { title } : {},
-    });
+  async createSession(
+    directory: string,
+    title?: string,
+    runtime?: RuntimeSelection,
+    onRuntimeFallback?: RuntimeFallbackCallback,
+  ) {
+    const baseBody = title ? { title } : {};
+    const withRuntime = () =>
+      this.request<SessionInfo>({
+        path: "/session",
+        method: "POST",
+        directory,
+        body: { ...baseBody, ...this.runtimeFields(runtime) },
+      });
+    const withoutRuntime = () =>
+      this.request<SessionInfo>({
+        path: "/session",
+        method: "POST",
+        directory,
+        body: baseBody,
+      });
+    return this.requestWithRuntimeFallback(runtime, onRuntimeFallback, withRuntime, withoutRuntime);
   }
 
   async listMessages(directory: string, sessionID: string) {
@@ -88,13 +156,32 @@ export class KiloApi {
     });
   }
 
-  async prompt(directory: string, sessionID: string, prompt: string) {
-    return this.request<{ info: unknown; parts: unknown[] }>({
-      path: `/session/${sessionID}/message`,
-      method: "POST",
-      directory,
-      body: { parts: [{ type: "text", text: prompt }] },
-    });
+  async prompt(
+    directory: string,
+    sessionID: string,
+    prompt: string,
+    runtime?: RuntimeSelection,
+    onRuntimeFallback?: RuntimeFallbackCallback,
+  ) {
+    debugLog('api.prompt called with runtime:', runtime);
+    const withRuntime = () =>
+      this.request<{ info: unknown; parts: unknown[] }>({
+        path: `/session/${sessionID}/message`,
+        method: "POST",
+        directory,
+        body: {
+          parts: [{ type: "text", text: prompt }],
+          ...this.runtimeFields(runtime),
+        },
+      });
+    const withoutRuntime = () =>
+      this.request<{ info: unknown; parts: unknown[] }>({
+        path: `/session/${sessionID}/message`,
+        method: "POST",
+        directory,
+        body: { parts: [{ type: "text", text: prompt }] },
+      });
+    return this.requestWithRuntimeFallback(runtime, onRuntimeFallback, withRuntime, withoutRuntime);
   }
 
   async sessionStatus(directory: string) {
@@ -232,7 +319,13 @@ export class KiloApi {
 
   // ── Agents ──────────────────────────────────────────────────────
   async listAgents() {
-    return this.request<Agent[]>({ path: "/agent" });
+    const data = await this.request<Agent[]>({ path: "/agent" });
+    return data
+      .map((agent) => ({
+        ...agent,
+        mode: agent.mode === "primary" || agent.mode === "subagent" ? agent.mode : "unknown",
+      }))
+      .sort((left, right) => left.name.localeCompare(right.name));
   }
 
   // ── Permissions + Questions ─────────────────────────────────────

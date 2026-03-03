@@ -9,15 +9,68 @@ import { formatTime, partText, toolState } from "./utils";
 
 type MessageBubbleProps = {
   message: MessageWithParts;
+  onUseQuickReply?: (value: string) => void;
 };
 
-export function MessageBubble({ message }: MessageBubbleProps) {
+function cleanQuickReply(value: string): string {
+  return value
+    .replace(/`([^`]+)`/g, "$1")
+    .replace(/\*\*([^*]+)\*\*/g, "$1")
+    .replace(/\*([^*]+)\*/g, "$1")
+    .replace(/^"+|"+$/g, "")
+    .trim();
+}
+
+function extractQuickReplies(texts: string[]): string[] {
+  const values: string[] = [];
+  let hasChecklist = false;
+  let bulletCount = 0;
+
+  for (const text of texts) {
+    const lines = text.split(/\r?\n/);
+    for (const line of lines) {
+      const checklistMatch = line.match(/^\s*[-*]\s+\[(?: |x|X)?\]\s+(.+)$/);
+      if (checklistMatch) {
+        hasChecklist = true;
+        const cleaned = cleanQuickReply(checklistMatch[1]);
+        if (cleaned && cleaned.length <= 120) values.push(cleaned);
+        continue;
+      }
+
+      const bulletMatch = line.match(/^\s*[-*o]\s+(.+)$/);
+      if (!bulletMatch) continue;
+
+      const cleaned = cleanQuickReply(bulletMatch[1]);
+      if (!cleaned) continue;
+      if (cleaned.endsWith(":")) continue;
+      if (cleaned.length > 120) continue;
+      if (/^https?:\/\//i.test(cleaned)) continue;
+      bulletCount += 1;
+      values.push(cleaned);
+    }
+  }
+
+  if (!hasChecklist && bulletCount < 2) return [];
+  const seen = new Set<string>();
+  const unique: string[] = [];
+  for (const value of values) {
+    if (seen.has(value)) continue;
+    seen.add(value);
+    unique.push(value);
+  }
+  return unique.slice(0, 10);
+}
+
+export function MessageBubble({ message, onUseQuickReply }: MessageBubbleProps) {
   const texts = message.parts.map(partText).filter(Boolean);
   const tools = message.parts.map(toolState).filter((t) => t !== null);
+  const errorName = message.info.error?.name || "";
+  const errorMessage = message.info.error?.data?.message || "";
+  const quickReplies = message.info.role === "assistant" ? extractQuickReplies(texts) : [];
   const [copied, setCopied] = useState(false);
 
   // Don't render empty assistant messages (e.g. reasoning-only while thinking)
-  if (texts.length === 0 && tools.length === 0 && message.info.role === "assistant") {
+  if (texts.length === 0 && tools.length === 0 && message.info.role === "assistant" && !errorName) {
     return null;
   }
 
@@ -34,7 +87,15 @@ export function MessageBubble({ message }: MessageBubbleProps) {
       <div className="bubble">
         <div className="message-head">
           <strong>{message.info.role === "assistant" ? "Kilo" : "You"}</strong>
-          <span>{formatTime(message.info.time?.created)}</span>
+          <div className="message-head-meta">
+            {message.info.role === "assistant" && message.info.agent && (
+              <span className="message-runtime-chip">agent: {message.info.agent}</span>
+            )}
+            {message.info.role === "assistant" && message.info.modelID && (
+              <span className="message-runtime-chip">model: {message.info.modelID}</span>
+            )}
+            <span>{formatTime(message.info.time?.created)}</span>
+          </div>
         </div>
         {texts.map((text, idx) => (
           <div key={`${message.info.id}-t-${idx}`} className="message-markdown">
@@ -73,6 +134,26 @@ export function MessageBubble({ message }: MessageBubbleProps) {
             </ReactMarkdown>
           </div>
         ))}
+        {message.info.role === "assistant" && errorName && (
+          <div className="message-error">
+            <strong>Run failed</strong>
+            <span>{errorMessage || errorName}</span>
+          </div>
+        )}
+        {message.info.role === "assistant" && onUseQuickReply && quickReplies.length > 0 && (
+          <div className="quick-replies">
+            {quickReplies.map((value, idx) => (
+              <button
+                type="button"
+                key={`${message.info.id}-quick-${idx}`}
+                className="quick-reply-btn"
+                onClick={() => onUseQuickReply(value)}
+              >
+                {value}
+              </button>
+            ))}
+          </div>
+        )}
         {message.info.role === "assistant" && texts.length > 0 && (
           <button type="button" className="copy-btn" onClick={handleCopy}>
             {copied ? <><Check size={12} /> Copied</> : <><Copy size={12} /> Copy</>}

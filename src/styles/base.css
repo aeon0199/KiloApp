@@ -1,0 +1,44 @@
+body.kilo-theme-industrial-neon-v2 {
+  background:
+    radial-gradient(130% 90% at 20% -10%, rgba(249, 247, 111, 0.08) 0%, rgba(0, 0, 0, 0) 46%),
+    radial-gradient(120% 85% at 70% 0%, rgba(51, 160, 255, 0.24) 0%, rgba(0, 0, 0, 0) 58%),
+    radial-gradient(120% 85% at 100% 100%, rgba(13, 203, 154, 0.13) 0%, rgba(0, 0, 0, 0) 64%),
+    #060b14;
+}
+
+body.kilo-theme-industrial-neon-v2::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.12;
+  background-image:
+    linear-gradient(transparent 97%, rgba(255, 255, 255, 0.5) 97%),
+    linear-gradient(90deg, transparent 97%, rgba(255, 255, 255, 0.5) 97%);
+  background-size: 6px 6px, 6px 6px;
+  mix-blend-mode: overlay;
+}
+
+html[data-kilo-theme="industrial_neon_v2"] {
+  color-scheme: dark;
+}
+
+html[data-kilo-theme="industrial_neon_v2"] body {
+  font-family: var(--ui-font-family);
+  text-rendering: geometricPrecision;
+  -webkit-font-smoothing: antialiased;
+}
+
+html[data-kilo-theme="industrial_neon_v2"] ::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+html[data-kilo-theme="industrial_neon_v2"] ::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: rgba(126, 162, 225, 0.42);
+}
+
+html[data-kilo-theme="industrial_neon_v2"] ::-webkit-scrollbar-thumb:hover {
+  background: rgba(126, 162, 225, 0.58);
+}

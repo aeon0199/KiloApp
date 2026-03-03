@@ -1,0 +1,65 @@
+.ui-theme-industrial-neon-v2.shell {
+  border-radius: 16px;
+  border: 1px solid rgba(126, 162, 225, 0.32);
+  background:
+    linear-gradient(180deg, rgba(11, 18, 31, 0.84), rgba(5, 11, 21, 0.9)),
+    linear-gradient(140deg, rgba(51, 160, 255, 0.12), rgba(0, 0, 0, 0) 42%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.1),
+    0 24px 70px rgba(0, 0, 0, 0.56),
+    0 0 0 1px rgba(51, 160, 255, 0.12);
+}
+
+.ui-theme-industrial-neon-v2 .sidebar {
+  border-right: 1px solid rgba(126, 162, 225, 0.22);
+  background:
+    linear-gradient(180deg, rgba(5, 12, 24, 0.88), rgba(3, 8, 16, 0.96)),
+    radial-gradient(70% 45% at 50% -20%, rgba(51, 160, 255, 0.13) 0%, rgba(0, 0, 0, 0) 74%);
+  padding: 0 14px 2px;
+}
+
+.ui-theme-industrial-neon-v2 .sidebar-drag-region {
+  min-height: 52px;
+}
+
+.ui-theme-industrial-neon-v2 .main-area {
+  background:
+    radial-gradient(120% 90% at 50% -10%, rgba(51, 160, 255, 0.16) 0%, transparent 50%),
+    radial-gradient(120% 100% at 75% 100%, rgba(13, 203, 154, 0.08) 0%, transparent 68%),
+    rgba(5, 11, 20, 0.74);
+}
+
+.ui-theme-industrial-neon-v2 .main-topbar {
+  border-bottom: 1px solid rgba(126, 162, 225, 0.24);
+  background:
+    linear-gradient(180deg, rgba(8, 15, 31, 0.88), rgba(7, 13, 26, 0.82)),
+    radial-gradient(90% 180% at 0% 0%, rgba(249, 247, 111, 0.08), transparent 56%);
+  padding: 0 18px 0 20px;
+}
+
+.ui-theme-industrial-neon-v2 .messages {
+  padding: 18px 28px 10px;
+}
+
+.ui-theme-industrial-neon-v2 .panel-container {
+  position: relative;
+}
+
+.ui-theme-industrial-neon-v2 .top-panel::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.025), rgba(255, 255, 255, 0)),
+    radial-gradient(80% 120% at 60% 0%, rgba(51, 160, 255, 0.06), rgba(0, 0, 0, 0) 52%);
+}
+
+.ui-theme-industrial-neon-v2 .bottom-panel {
+  border-top: 1px solid rgba(126, 162, 225, 0.26);
+  background: rgba(3, 9, 18, 0.82);
+}
+
+.ui-theme-industrial-neon-v2.ui-density-compact .messages {
+  padding: 14px 20px 8px;
+}

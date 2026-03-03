@@ -1,0 +1,8 @@
+<svg width="256" height="256" viewBox="0 0 256 256" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="256" height="256" fill="#070A10"/>
+  <rect x="34" y="34" width="188" height="188" stroke="#F7F669" stroke-width="12"/>
+  <g fill="#F7F669">
+    <text x="72" y="122" font-family="'JetBrains Mono', 'Fira Code', monospace" font-size="58" font-weight="700" letter-spacing="2">K1</text>
+    <text x="72" y="178" font-family="'JetBrains Mono', 'Fira Code', monospace" font-size="58" font-weight="700" letter-spacing="2">L0</text>
+  </g>
+</svg>

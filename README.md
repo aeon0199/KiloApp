@@ -41,6 +41,32 @@ npm run dist       # package with electron-builder
 
 Built artifacts go to `release/`.
 
+## Quality Gates
+
+```bash
+npm run lint
+npm run typecheck
+npm run test
+npm run test:e2e-smoke
+npm run verify     # runs all gates + build
+```
+
+## Diagnostics
+
+- Settings -> Server -> `Open Diagnostics` to collect a snapshot.
+- Settings -> Server -> `Export Diagnostics` to produce a support zip bundle.
+- Settings -> Server -> `Report Issue` opens a prefilled issue with diagnostics metadata.
+
+## Release
+
+- CI workflow: `.github/workflows/ci.yml`
+- macOS beta release workflow: `.github/workflows/release-macos.yml`
+- Notarization hook: `scripts/notarize.cjs`
+- Release templates:
+  - `docs/release-notes-template.md`
+  - `docs/known-issues-template.md`
+  - `docs/beta-ops.md`
+
 ## Architecture
 
 ```

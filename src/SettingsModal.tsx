@@ -1,7 +1,14 @@
 import { useEffect, useState } from "react";
-import { X, User, Server, RefreshCw, ExternalLink, Terminal } from "lucide-react";
+import { X, User, Server, RefreshCw, ExternalLink, Terminal, Bug, Download, Wifi } from "lucide-react";
 import { KiloApi } from "./api";
-import type { KiloCliInfo, KiloProfile, ProviderListResponse } from "./types";
+import type {
+  ConnectionState,
+  DiagnosticSnapshot,
+  KiloCliInfo,
+  KiloProfile,
+  ProviderListResponse,
+  UiPreferencesV1,
+} from "./types";
 import { modelLabel } from "./utils";
 
 type SettingsModalProps = {
@@ -12,12 +19,43 @@ type SettingsModalProps = {
   healthText: string;
   isOnline: boolean;
   cliInfo: KiloCliInfo;
+  connectionState: ConnectionState;
+  diagnosticsID: string;
+  diagnosticsPath: string;
+  uiPreferences: UiPreferencesV1;
+  onChangeUiPreferences: (partial: Partial<UiPreferencesV1>) => void;
+  onResetUiAppearance: () => void;
   onRestartServer: () => void;
+  onReconnect: () => void;
+  onCollectDiagnostics: () => Promise<DiagnosticSnapshot | null>;
+  onExportDiagnostics: () => Promise<void>;
+  onReportIssue: () => Promise<void>;
 };
 
-export function SettingsModal({ open, onClose, api, providers, healthText, isOnline, cliInfo, onRestartServer }: SettingsModalProps) {
+export function SettingsModal({
+  open,
+  onClose,
+  api,
+  providers,
+  healthText,
+  isOnline,
+  cliInfo,
+  connectionState,
+  diagnosticsID,
+  diagnosticsPath,
+  uiPreferences,
+  onChangeUiPreferences,
+  onResetUiAppearance,
+  onRestartServer,
+  onReconnect,
+  onCollectDiagnostics,
+  onExportDiagnostics,
+  onReportIssue,
+}: SettingsModalProps) {
   const [profile, setProfile] = useState<KiloProfile | null>(null);
   const [connectHint, setConnectHint] = useState("");
+  const [collecting, setCollecting] = useState(false);
+  const connectionLabel = connectionState.replace(/_/g, " ");
 
   useEffect(() => {
     if (!open) return;
@@ -33,8 +71,17 @@ export function SettingsModal({ open, onClose, api, providers, healthText, isOnl
 
   async function openKiloSite() {
     try {
-      await window.electron.openExternal("https://app.kilo.ai");
+      await window.electron.shell.openExternal("https://app.kilo.ai");
     } catch { /* ignore */ }
+  }
+
+  async function handleCollectDiagnostics() {
+    setCollecting(true);
+    try {
+      await onCollectDiagnostics();
+    } finally {
+      setCollecting(false);
+    }
   }
 
   if (!open) return null;
@@ -112,6 +159,47 @@ export function SettingsModal({ open, onClose, api, providers, healthText, isOnl
         </div>
 
         <div className="settings-section">
+          <h3>UI Experience</h3>
+          <div className="settings-grid settings-ui-grid">
+            <label>
+              Theme variant
+              <select
+                value={uiPreferences.themeVariant}
+                onChange={(event) => onChangeUiPreferences({ themeVariant: event.target.value as UiPreferencesV1["themeVariant"] })}
+              >
+                <option value="classic">Classic</option>
+                <option value="industrial_neon_v2">Industrial Neon v2</option>
+              </select>
+            </label>
+            <label>
+              Density
+              <select
+                value={uiPreferences.density}
+                onChange={(event) => onChangeUiPreferences({ density: event.target.value as UiPreferencesV1["density"] })}
+              >
+                <option value="comfortable">Comfortable</option>
+                <option value="compact">Compact</option>
+              </select>
+            </label>
+            <label>
+              Motion
+              <select
+                value={uiPreferences.motion}
+                onChange={(event) => onChangeUiPreferences({ motion: event.target.value as UiPreferencesV1["motion"] })}
+              >
+                <option value="full">Full</option>
+                <option value="reduced">Reduced</option>
+              </select>
+            </label>
+          </div>
+          <div className="settings-actions">
+            <button className="ghost" onClick={onResetUiAppearance}>
+              Reset appearance
+            </button>
+          </div>
+        </div>
+
+        <div className="settings-section">
           <h3><Server size={14} /> Server</h3>
           <div className="settings-info">
             <div className="settings-info-row">
@@ -128,11 +216,43 @@ export function SettingsModal({ open, onClose, api, providers, healthText, isOnl
               <span>Port</span>
               <span>4100</span>
             </div>
+            <div className="settings-info-row">
+              <span>Connection</span>
+              <span>{connectionLabel}</span>
+            </div>
+            {diagnosticsID && (
+              <div className="settings-info-row">
+                <span>Diagnostics ID</span>
+                <span>{diagnosticsID}</span>
+              </div>
+            )}
+            {diagnosticsPath && (
+              <div className="settings-info-row">
+                <span>Last Bundle</span>
+                <span title={diagnosticsPath}>{diagnosticsPath.split("/").pop()}</span>
+              </div>
+            )}
           </div>
           <div className="settings-actions">
             <button className="ghost" onClick={onRestartServer}>
               <RefreshCw size={12} />
               Restart Server
+            </button>
+            <button className="ghost" onClick={onReconnect}>
+              <Wifi size={12} />
+              Reconnect
+            </button>
+            <button className="ghost" onClick={handleCollectDiagnostics} disabled={collecting}>
+              <Bug size={12} />
+              {collecting ? "Collecting..." : "Open Diagnostics"}
+            </button>
+            <button className="ghost" onClick={onExportDiagnostics}>
+              <Download size={12} />
+              Export Diagnostics
+            </button>
+            <button className="ghost" onClick={onReportIssue}>
+              <ExternalLink size={12} />
+              Report Issue
             </button>
           </div>
         </div>

@@ -33,7 +33,16 @@ export type MessageInfo = {
   role: "user" | "assistant";
   sessionID: string;
   modelID?: string;
+  providerID?: string;
   agent?: string;
+  error?: {
+    name?: string;
+    data?: {
+      message?: string;
+      [key: string]: unknown;
+    };
+    [key: string]: unknown;
+  };
   time?: {
     created?: number;
     completed?: number;
@@ -87,6 +96,71 @@ export type KiloServerState = {
   lastError?: string | null;
 };
 
+export type ConnectionState =
+  | "booting"
+  | "checking_cli"
+  | "starting_server"
+  | "healthy"
+  | "degraded";
+
+export type AppErrorCategory =
+  | "cli_missing"
+  | "server_unreachable"
+  | "auth_required"
+  | "agent_unsupported"
+  | "model_unavailable"
+  | "api_error"
+  | "unknown";
+
+export type AppHealthState = {
+  state: ConnectionState;
+  text: string;
+  category?: AppErrorCategory;
+};
+
+export type DiagnosticSnapshot = {
+  id: string;
+  generatedAt: string;
+  appVersion: string;
+  platform: string;
+  arch: string;
+  osRelease: string;
+  uptimeMs: number;
+  homeDirectory: string;
+  server: KiloServerState;
+  cli: KiloCliInfo;
+  selectedWorkspace?: string | null;
+  selectedSessionID?: string | null;
+  selectedRuntime?: AgentRuntimeState | null;
+  runtimeError?: string | null;
+  errors: Array<{
+    at: string;
+    category: AppErrorCategory;
+    message: string;
+  }>;
+  recentLogs: string[];
+};
+
+export type AppSettingsV1 = {
+  schemaVersion: 1;
+  lastWorkspace: string;
+  reportIssuesTo: string;
+  ui: UiPreferencesV1;
+};
+
+export type UiDensity = "comfortable" | "compact";
+
+export type UiMotion = "full" | "reduced";
+
+export type UiThemeVariant = "classic" | "industrial_neon_v2";
+
+export type UiPreferencesV1 = {
+  schemaVersion: 1;
+  themeVariant: UiThemeVariant;
+  density: UiDensity;
+  motion: UiMotion;
+};
+
 export type ModelInfo = {
   id: string;
   providerID: string;
@@ -105,6 +179,33 @@ export type ProviderListResponse = {
   all: ProviderEntry[];
   default: Record<string, string>;
   connected: string[];
+};
+
+export type AgentMode = "primary" | "subagent" | "unknown";
+
+export type AgentRuntimeState = {
+  agentName: string;
+  providerID: string;
+  modelID: string;
+  updatedAt: number;
+};
+
+export type ThreadRuntimeState = Record<string, AgentRuntimeState>;
+
+export type AgentModelMemoryEntry = {
+  providerID: string;
+  modelID: string;
+  updatedAt: number;
+};
+
+export type AgentModelMemory = Record<string, AgentModelMemoryEntry>;
+
+export type AgentCompatibility = "ok" | "model_missing" | "agent_unavailable";
+
+export type RuntimeSelection = {
+  agent?: string;
+  providerID?: string;
+  modelID?: string;
 };
 
 // ── Health ──────────────────────────────────────────────────────
@@ -142,7 +243,7 @@ export type CloudSessionsResponse = {
 export type Agent = {
   name: string;
   description: string;
-  mode?: string;
+  mode?: AgentMode | string;
   native?: boolean;
   options?: Record<string, unknown>;
   permission?: Array<{

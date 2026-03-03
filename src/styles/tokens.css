@@ -1,0 +1,100 @@
+@font-face {
+  font-family: "Space Grotesk";
+  src: url("../assets/fonts/SpaceGrotesk-Latin.woff2") format("woff2");
+  font-style: normal;
+  font-weight: 300 800;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Manrope";
+  src: url("../assets/fonts/Manrope-Latin.woff2") format("woff2");
+  font-style: normal;
+  font-weight: 300 800;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "JetBrains Mono";
+  src: url("../assets/fonts/JetBrainsMono-Latin.woff2") format("woff2");
+  font-style: normal;
+  font-weight: 300 800;
+  font-display: swap;
+}
+
+:root {
+  --ui-font-display: "Space Grotesk", "Avenir Next", "SF Pro Display", sans-serif;
+  --ui-font-body: "Manrope", "Avenir Next", "SF Pro Text", sans-serif;
+  --ui-font-mono: "JetBrains Mono", "Fira Code", ui-monospace, SFMono-Regular, Menlo, monospace;
+  --ui-radius-sm: 8px;
+  --ui-radius-md: 12px;
+  --ui-radius-lg: 18px;
+  --ui-radius-xl: 24px;
+  --ui-space-1: 4px;
+  --ui-space-2: 8px;
+  --ui-space-3: 12px;
+  --ui-space-4: 16px;
+  --ui-space-5: 20px;
+  --ui-space-6: 24px;
+}
+
+.ui-theme-industrial-neon-v2 {
+  --ui-font-family: var(--ui-font-body);
+  --brand-font: var(--ui-font-display);
+  --code-font-family: var(--ui-font-mono);
+  --code-font-size: 12px;
+  --code-line-height: 1.34;
+
+  --brand-gold: #f9f76f;
+  --brand-gold-dim: rgba(249, 247, 111, 0.78);
+  --brand-gold-muted: rgba(249, 247, 111, 0.24);
+  --brand-gold-subtle: rgba(249, 247, 111, 0.12);
+  --brand-blue: #33a0ff;
+  --brand-blue-dim: rgba(51, 160, 255, 0.76);
+  --brand-blue-muted: rgba(51, 160, 255, 0.24);
+  --brand-green: #0dcb9a;
+
+  --text-primary: #edf2ff;
+  --text-strong: #fefefe;
+  --text-stronger: rgba(255, 255, 255, 0.96);
+  --text-quiet: rgba(237, 242, 255, 0.9);
+  --text-muted: rgba(237, 242, 255, 0.78);
+  --text-subtle: rgba(218, 228, 247, 0.68);
+  --text-faint: rgba(194, 205, 230, 0.58);
+  --text-fainter: rgba(194, 205, 230, 0.5);
+  --text-dim: rgba(194, 205, 230, 0.4);
+
+  --surface-sidebar: rgba(4, 10, 20, 0.83);
+  --surface-topbar: rgba(8, 14, 28, 0.75);
+  --surface-messages: rgba(4, 10, 19, 0.72);
+  --surface-composer: rgba(8, 14, 26, 0.8);
+  --surface-card: rgba(255, 255, 255, 0.05);
+  --surface-card-strong: rgba(249, 247, 111, 0.1);
+  --surface-card-muted: rgba(255, 255, 255, 0.09);
+  --surface-control: rgba(255, 255, 255, 0.09);
+  --surface-control-hover: rgba(255, 255, 255, 0.16);
+  --surface-hover: rgba(255, 255, 255, 0.1);
+  --surface-bubble-user: rgba(51, 160, 255, 0.34);
+  --surface-command: rgba(3, 8, 16, 0.9);
+  --surface-popover: rgba(7, 14, 28, 0.98);
+
+  --border-subtle: rgba(126, 162, 225, 0.22);
+  --border-muted: rgba(126, 162, 225, 0.14);
+  --border-default: rgba(126, 162, 225, 0.26);
+  --border-strong: rgba(126, 162, 225, 0.36);
+  --border-stronger: rgba(126, 162, 225, 0.5);
+  --border-accent: rgba(249, 247, 111, 0.78);
+  --border-accent-soft: rgba(249, 247, 111, 0.32);
+
+  --accent-primary: var(--brand-gold);
+  --accent-cta: var(--brand-blue);
+  --shadow-accent: rgba(51, 160, 255, 0.26);
+
+  --sidebar-width: 316px;
+  --main-topbar-height: 56px;
+}
+
+.ui-density-compact {
+  --sidebar-width: 296px;
+  --main-topbar-height: 52px;
+}

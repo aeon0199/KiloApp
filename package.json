@@ -2,19 +2,40 @@
   "name": "kiloapp",
   "private": true,
   "version": "0.1.0",
+  "description": "Native macOS desktop client for Kilo Code with local server orchestration and session workflows.",
+  "author": "Josh Malone",
   "type": "module",
+  "homepage": "https://github.com/joshmalone/KiloApp",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/joshmalone/KiloApp.git"
+  },
+  "bugs": {
+    "url": "https://github.com/joshmalone/KiloApp/issues"
+  },
   "main": "dist-electron/main.cjs",
   "scripts": {
     "dev": "concurrently \"vite\" \"wait-on http://localhost:5173 && electron . --dev\"",
     "build": "tsc -p tsconfig.electron.json && vite build",
+    "typecheck": "tsc --noEmit -p tsconfig.electron.json && tsc --noEmit -p tsconfig.json",
+    "lint": "eslint .",
+    "test": "vitest run --config vitest.config.ts",
+    "test:e2e-smoke": "vitest run --config vitest.smoke.config.ts",
+    "verify": "npm run lint && npm run typecheck && npm run test && npm run test:e2e-smoke && npm run build",
     "dist": "npm run build && electron-builder",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "postinstall": "electron-builder install-app-deps"
   },
   "dependencies": {
     "@types/diff": "^7.0.2",
     "@types/react-syntax-highlighter": "^15.5.13",
+    "@xterm/addon-fit": "^0.11.0",
+    "@xterm/addon-webgl": "^0.19.0",
+    "@xterm/xterm": "^6.0.0",
     "diff": "^8.0.3",
+    "jszip": "^3.10.1",
     "lucide-react": "^0.575.0",
+    "node-pty": "^1.1.0",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
     "react-markdown": "^10.1.0",
@@ -22,19 +43,33 @@
     "remark-gfm": "^4.0.1"
   },
   "devDependencies": {
+    "@electron/notarize": "^3.1.0",
+    "@eslint/js": "^9.39.1",
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.0",
+    "@testing-library/user-event": "^14.6.1",
     "@types/react": "^19.1.8",
     "@types/react-dom": "^19.1.6",
     "@vitejs/plugin-react": "^4.6.0",
     "concurrently": "^9.1.2",
     "electron": "^34.2.0",
     "electron-builder": "^25.1.8",
+    "electron-rebuild": "^3.2.9",
+    "eslint": "^9.39.1",
+    "eslint-plugin-react-hooks": "^5.2.0",
+    "eslint-plugin-react-refresh": "^0.4.24",
+    "globals": "^16.5.0",
+    "jsdom": "^27.0.1",
     "typescript": "~5.8.3",
+    "typescript-eslint": "^8.46.2",
     "vite": "^7.0.4",
+    "vitest": "^3.2.4",
     "wait-on": "^8.0.3"
   },
   "build": {
     "appId": "com.joshmalone.kiloapp",
     "productName": "KiloApp",
+    "afterSign": "scripts/notarize.cjs",
     "directories": {
       "output": "release"
     },
@@ -44,7 +79,17 @@
     ],
     "mac": {
       "icon": "build/icons/icon.icns",
-      "target": "dmg"
+      "hardenedRuntime": true,
+      "gatekeeperAssess": false,
+      "category": "public.app-category.developer-tools",
+      "target": [
+        {
+          "target": "dmg",
+          "arch": [
+            "arm64"
+          ]
+        }
+      ]
     },
     "win": {
       "icon": "build/icons/icon.ico",

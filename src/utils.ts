@@ -1,4 +1,12 @@
-import type { MessagePart, ModelInfo, ProviderListResponse } from "./types";
+import type {
+  Agent,
+  AgentCompatibility,
+  AgentMode,
+  AgentRuntimeState,
+  MessagePart,
+  ModelInfo,
+  ProviderListResponse,
+} from "./types";
 
 export function formatTime(timestamp?: number): string {
   if (!timestamp) return "";
@@ -43,21 +51,101 @@ export function toolState(part: MessagePart): { name: string; status: string } |
   return { name, status };
 }
 
-export function currentModel(
+export function normalizeAgentMode(mode?: string): AgentMode {
+  if (mode === "primary") return "primary";
+  if (mode === "subagent") return "subagent";
+  return "unknown";
+}
+
+export function splitAgentsByMode(agents: Agent[]): { primary: Agent[]; subagent: Agent[]; unknown: Agent[] } {
+  const primary: Agent[] = [];
+  const subagent: Agent[] = [];
+  const unknown: Agent[] = [];
+
+  for (const agent of agents) {
+    const mode = normalizeAgentMode(agent.mode);
+    if (mode === "primary") {
+      primary.push(agent);
+      continue;
+    }
+    if (mode === "subagent") {
+      subagent.push(agent);
+      continue;
+    }
+    unknown.push(agent);
+  }
+
+  return { primary, subagent, unknown };
+}
+
+export function defaultAgentName(agents: Agent[], preferred = "code"): string {
+  if (agents.some((agent) => agent.name === preferred)) return preferred;
+  const primary = agents.find((agent) => normalizeAgentMode(agent.mode) === "primary");
+  if (primary) return primary.name;
+  if (agents[0]) return agents[0].name;
+  return preferred;
+}
+
+export function modelExists(providers: ProviderListResponse | null, providerID: string, modelID: string): boolean {
+  if (!providers) return false;
+  const provider = providers.all.find((entry) => entry.id === providerID);
+  if (!provider) return false;
+  return !!provider.models[modelID];
+}
+
+export function firstAvailableModel(
   providers: ProviderListResponse | null,
 ): { providerID: string; modelID: string; modelName: string } | null {
   if (!providers) return null;
-  const providerID = providers.connected[0] || Object.keys(providers.default)[0];
-  if (!providerID) return null;
-  const modelID = providers.default[providerID];
-  if (!modelID) return null;
-  const provider = providers.all.find((p) => p.id === providerID);
-  const modelInfo = provider?.models[modelID];
-  return { providerID, modelID, modelName: modelInfo?.name || modelID };
+  for (const providerID of providers.connected) {
+    const provider = providers.all.find((entry) => entry.id === providerID);
+    if (!provider) continue;
+    const firstModel = Object.values(provider.models)[0];
+    if (!firstModel) continue;
+    return {
+      providerID,
+      modelID: firstModel.id,
+      modelName: firstModel.name || firstModel.id,
+    };
+  }
+  return null;
 }
 
-export function modelLabel(providers: ProviderListResponse | null): string {
-  const model = currentModel(providers);
+export function currentModel(
+  providers: ProviderListResponse | null,
+  preferredProviderID?: string,
+): { providerID: string; modelID: string; modelName: string } | null {
+  if (!providers) return null;
+  const providerCandidates = preferredProviderID
+    ? [preferredProviderID, ...providers.connected.filter((pid) => pid !== preferredProviderID), ...Object.keys(providers.default)]
+    : [...providers.connected, ...Object.keys(providers.default)];
+
+  for (const providerID of providerCandidates) {
+    const provider = providers.all.find((entry) => entry.id === providerID);
+    if (!provider) continue;
+    const configuredModelID = providers.default[providerID];
+    if (configuredModelID && provider.models[configuredModelID]) {
+      return {
+        providerID,
+        modelID: configuredModelID,
+        modelName: provider.models[configuredModelID].name || configuredModelID,
+      };
+    }
+
+    const firstModel = Object.values(provider.models)[0];
+    if (!firstModel) continue;
+    return {
+      providerID,
+      modelID: firstModel.id,
+      modelName: firstModel.name || firstModel.id,
+    };
+  }
+
+  return null;
+}
+
+export function modelLabel(providers: ProviderListResponse | null, preferredProviderID?: string): string {
+  const model = currentModel(providers, preferredProviderID);
   return model ? model.modelName : "no model";
 }
 
@@ -70,4 +158,27 @@ export function availableModels(
     const models = provider ? Object.values(provider.models) : [];
     return { providerID: pid, models };
   });
+}
+
+export function runtimeModelName(
+  providers: ProviderListResponse | null,
+  runtime: Pick<AgentRuntimeState, "providerID" | "modelID"> | null,
+): string {
+  if (!runtime || !providers) return "no model";
+  const provider = providers.all.find((entry) => entry.id === runtime.providerID);
+  if (!provider) return runtime.modelID || "no model";
+  return provider.models[runtime.modelID]?.name || runtime.modelID || "no model";
+}
+
+export function runtimeCompatibility(
+  agents: Agent[],
+  providers: ProviderListResponse | null,
+  runtime: AgentRuntimeState | null,
+): AgentCompatibility {
+  if (!runtime) return "ok";
+  if (!agents.some((agent) => agent.name === runtime.agentName)) return "agent_unavailable";
+  if (!runtime.providerID || !runtime.modelID) return "ok";
+  if (!providers) return "ok";
+  if (!modelExists(providers, runtime.providerID, runtime.modelID)) return "model_missing";
+  return "ok";
 }

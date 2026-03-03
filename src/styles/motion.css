@@ -1,0 +1,59 @@
+@keyframes industrial-shell-enter {
+  0% {
+    opacity: 0;
+    transform: translateY(8px) scale(0.995);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes industrial-stagger-enter {
+  0% {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.ui-theme-industrial-neon-v2.ui-motion-full {
+  animation: industrial-shell-enter 380ms ease-out;
+}
+
+.ui-theme-industrial-neon-v2.ui-motion-full .sidebar > *,
+.ui-theme-industrial-neon-v2.ui-motion-full .main-topbar > *,
+.ui-theme-industrial-neon-v2.ui-motion-full .composer-input {
+  animation: industrial-stagger-enter 360ms ease-out;
+}
+
+.ui-theme-industrial-neon-v2 .sidebar-tab,
+.ui-theme-industrial-neon-v2 .thread-item,
+.ui-theme-industrial-neon-v2 .meta-pill,
+.ui-theme-industrial-neon-v2 .terminal-action,
+.ui-theme-industrial-neon-v2 .agent-card,
+.ui-theme-industrial-neon-v2 .cloud-session-item {
+  transition:
+    background-color 140ms ease,
+    color 140ms ease,
+    border-color 160ms ease,
+    box-shadow 200ms ease,
+    transform 140ms ease;
+}
+
+.ui-theme-industrial-neon-v2 .thread-item:hover,
+.ui-theme-industrial-neon-v2 .agent-card:hover,
+.ui-theme-industrial-neon-v2 .cloud-session-item:hover {
+  transform: translateY(-1px);
+}
+
+html[data-kilo-motion="reduced"] *,
+.ui-motion-reduced * {
+  animation-duration: 0ms !important;
+  animation-delay: 0ms !important;
+  transition-duration: 0ms !important;
+  scroll-behavior: auto !important;
+}
